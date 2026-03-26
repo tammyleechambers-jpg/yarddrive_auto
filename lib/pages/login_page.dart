@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/auth_service.dart';
+import 'dashboard_page.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -12,24 +14,33 @@ class _LoginPageState extends State<LoginPage> {
 
   bool loading = false;
 
-  void login() {
-
+  // 🔹 Firebase login function
+  void login() async {
     setState(() {
       loading = true;
     });
 
-    // TODO: connect Firebase login
+    final user = await AuthService().login(
+      email.text.trim(),
+      password.text.trim(),
+    );
 
-    Future.delayed(Duration(seconds: 2), (){
-      setState(() {
-        loading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Login Demo Success"))
-      );
+    setState(() {
+      loading = false;
     });
 
+    if (user != null) {
+      // Navigate to Dashboard after login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => DashboardPage()),
+      );
+    } else {
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Login failed. Check credentials."))
+      );
+    }
   }
 
   @override
@@ -60,9 +71,18 @@ class _LoginPageState extends State<LoginPage> {
             loading
               ? CircularProgressIndicator()
               : ElevatedButton(
-                  onPressed: login,
+                  onPressed: login, // 🔹 calls Firebase login
                   child: Text("Login"),
-                )
+                ),
+
+            SizedBox(height: 10),
+
+            TextButton(
+              onPressed: () {
+                // TODO: Navigate to Registration Page
+              },
+              child: Text("Don't have an account? Register"),
+            ),
 
           ],
         ),
