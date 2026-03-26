@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 
 class VehiclePage extends StatefulWidget {
   @override
@@ -11,24 +12,64 @@ class _VehiclePageState extends State<VehiclePage> {
   final modelController = TextEditingController();
   final yearController = TextEditingController();
 
-  Map<String, String> vehicle = {};
+  bool loading = false;
+  bool fetching = true;
 
-  void saveVehicle() {
+  Map<String, dynamic>? vehicle;
+
+  @override
+  void initState() {
+    super.initState();
+    loadVehicle();
+  }
+
+  void loadVehicle() async {
+
+    final data = await FirestoreService().getVehicle();
+
+    if (data != null) {
+      makeController.text = data["make"];
+      modelController.text = data["model"];
+      yearController.text = data["year"];
+    }
+
     setState(() {
-      vehicle = {
-        "make": makeController.text,
-        "model": modelController.text,
-        "year": yearController.text,
-      };
+      vehicle = data;
+      fetching = false;
+    });
+  }
+
+  void saveVehicle() async {
+
+    setState(() {
+      loading = true;
+    });
+
+    await FirestoreService().saveVehicle(
+      make: makeController.text.trim(),
+      model: modelController.text.trim(),
+      year: yearController.text.trim(),
+    );
+
+    setState(() {
+      loading = false;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Vehicle saved!"))
+      SnackBar(content: Text("Vehicle saved successfully"))
     );
   }
 
   @override
   Widget build(BuildContext context) {
+
+    if (fetching) {
+      return Scaffold(
+        appBar: AppBar(title: Text("My Vehicle")),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: Text("My Vehicle")),
       body: Padding(
@@ -54,24 +95,13 @@ class _VehiclePageState extends State<VehiclePage> {
 
             SizedBox(height: 20),
 
-            ElevatedButton(
-              onPressed: saveVehicle,
-              child: Text("Save Vehicle"),
-            ),
+            loading
+              ? CircularProgressIndicator()
+              : ElevatedButton(
+                  onPressed: saveVehicle,
+                  child: Text("Save Vehicle"),
+                ),
 
-            SizedBox(height: 30),
-
-            vehicle.isEmpty
-              ? Text("No vehicle saved yet")
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Your Vehicle:"),
-                    Text("Make: ${vehicle['make']}"),
-                    Text("Model: ${vehicle['model']}"),
-                    Text("Year: ${vehicle['year']}"),
-                  ],
-                )
           ],
         ),
       ),
