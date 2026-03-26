@@ -1,39 +1,119 @@
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
 
-class PartsPage extends StatelessWidget {
+class PartsPage extends StatefulWidget {
+  @override
+  _PartsPageState createState() => _PartsPageState();
+}
 
-  final List<Map<String, dynamic>> demoParts = [
-    {"name": "Brake Pad", "price": 50.0},
-    {"name": "Oil Filter", "price": 15.0},
-    {"name": "Air Filter", "price": 20.0},
+class _PartsPageState extends State<PartsPage> {
+
+  final TextEditingController searchController = TextEditingController();
+
+  final List<String> allParts = [
+    "Brake Pad",
+    "Oil Filter",
+    "Air Filter",
+    "Spark Plug",
+    "Radiator",
+    "Fuel Pump",
+    "Battery",
+    "Alternator"
   ];
+
+  List<String> filteredParts = [];
+
+  @override
+  void initState() {
+    super.initState();
+    filteredParts = allParts;
+  }
+
+  void searchParts(String query) {
+    final results = allParts
+        .where((part) =>
+            part.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    setState(() {
+      filteredParts = results;
+    });
+  }
+
+  void orderPart(String part) {
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: Text("Confirm Order"),
+        content: Text("Order $part ?"),
+        actions: [
+          TextButton(
+            child: Text("Cancel"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            child: Text("Order"),
+            onPressed: () {
+              FirestoreService().addOrder(part);
+              Navigator.pop(context);
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text("$part ordered"))
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
-      appBar: AppBar(title: Text("Auto Parts")),
-      body: ListView.builder(
-        itemCount: demoParts.length,
-        itemBuilder: (context, index) {
+      appBar: AppBar(title: Text("Browse Parts")),
 
-          final part = demoParts[index];
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          children: [
 
-          return Card(
-            margin: EdgeInsets.all(10),
-            child: ListTile(
-              title: Text(part['name']),
-              subtitle: Text("\$${part['price']}"),
-              trailing: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("${part['name']} ordered!"))
-                  );
-                },
-                child: Text("Order"),
+            TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                labelText: "Search Parts",
+                prefixIcon: Icon(Icons.search),
               ),
+              onChanged: searchParts,
             ),
-          );
-        },
+
+            SizedBox(height: 20),
+
+            Expanded(
+              child: filteredParts.isEmpty
+                  ? Center(child: Text("No parts found"))
+                  : ListView.builder(
+                      itemCount: filteredParts.length,
+                      itemBuilder: (context, index) {
+
+                        final part = filteredParts[index];
+
+                        return Card(
+                          child: ListTile(
+                            title: Text(part),
+                            trailing: ElevatedButton(
+                              child: Text("Order"),
+                              onPressed: () => orderPart(part),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            )
+
+          ],
+        ),
       ),
     );
   }
