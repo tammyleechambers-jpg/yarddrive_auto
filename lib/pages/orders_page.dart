@@ -1,59 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/firestore_service.dart';
 
-class OrdersPage extends StatefulWidget {
-  @override
-  _OrdersPageState createState() => _OrdersPageState();
-}
+class OrdersPage extends StatelessWidget {
 
-class _OrdersPageState extends State<OrdersPage> {
-
-  // Demo list of orders
-  List<Map<String, dynamic>> orders = [
-    {"part": "Brake Pad", "status": "Pending"},
-    {"part": "Oil Filter", "status": "Delivered"},
-  ];
-
-  // Function to delete order
-  void deleteOrder(int index) {
-    setState(() {
-      orders.removeAt(index);
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Order deleted"))
-    );
-  }
+  final TextEditingController partController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(title: Text("My Orders")),
-      body: orders.isEmpty
-          ? Center(child: Text("No orders yet"))
-          : ListView.builder(
-              itemCount: orders.length,
-              itemBuilder: (context, index) {
-                final order = orders[index];
-                return Card(
-                  margin: EdgeInsets.all(10),
-                  child: ListTile(
-                    title: Text(order['part']),
-                    subtitle: Text("Status: ${order['status']}"),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => deleteOrder(index),
-                    ),
+
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirestoreService().getOrders(),
+        builder: (context, snapshot) {
+
+          if (!snapshot.hasData) {
+            return Center(child: CircularProgressIndicator());
+          }
+
+          final orders = snapshot.data!.docs;
+
+          if (orders.isEmpty) {
+            return Center(child: Text("No orders yet"));
+          }
+
+          return ListView.builder(
+            itemCount: orders.length,
+            itemBuilder: (context, index) {
+
+              final order = orders[index];
+
+              return Card(
+                margin: EdgeInsets.all(10),
+                child: ListTile(
+                  title: Text(order["partName"]),
+                  trailing: IconButton(
+                    icon: Icon(Icons.delete, color: Colors.red),
+                    onPressed: () {
+                      FirestoreService().deleteOrder(order.id);
+                    },
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
+          );
+        },
+      ),
+
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
         onPressed: () {
-          // Demo: add a new order
-          setState(() {
-            orders.add({"part": "New Part", "status": "Pending"});
-          });
+          showDialog(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: Text("New Order"),
+              content: TextField(
+                controller: partController,
+                decoration: InputDecoration(labelText: "Part Name"),
+              ),
+              actions: [
+                TextButton(
+                  child: Text("Cancel"),
+                  onPressed: () => Navigator.pop(context),
+                ),
+                ElevatedButton(
+                  child: Text("Add"),
+                  onPressed: () {
+                    FirestoreService()
+                        .addOrder(partController.text.trim());
+                    partController.clear();
+                    Navigator.pop(context);
+                  },
+                ),
+              ],
+            ),
+          );
         },
       ),
     );
