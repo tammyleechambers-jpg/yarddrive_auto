@@ -33,3 +33,28 @@ class FirestoreService {
     return doc.data();
   }
 }
+Stream<QuerySnapshot> getOrders() {
+
+  final user = AuthService().currentUser;
+  return _db
+      .collection("orders")
+      .where("userId", isEqualTo: user?.uid)
+      .snapshots();
+}
+
+Future<void> addOrder(String partName) async {
+
+  final user = AuthService().currentUser;
+
+  if (user == null) return;
+
+  await _db.collection("orders").add({
+    "partName": partName,
+    "userId": user.uid,
+    "createdAt": Timestamp.now(),
+  });
+}
+
+Future<void> deleteOrder(String id) async {
+  await _db.collection("orders").doc(id).delete();
+}
