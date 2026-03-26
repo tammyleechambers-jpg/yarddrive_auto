@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'dashboard_page.dart';
+import 'register_page.dart'; // 🔹 Import Registration Page
 
 class LoginPage extends StatefulWidget {
   @override
@@ -9,8 +10,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
 
-  final email = TextEditingController(); // email input
-  final password = TextEditingController(); // password input
+  final email = TextEditingController();
+  final password = TextEditingController();
 
   bool loading = false;
 
@@ -71,15 +72,19 @@ class _LoginPageState extends State<LoginPage> {
             loading
               ? CircularProgressIndicator()
               : ElevatedButton(
-                  onPressed: login, // 🔹 calls Firebase login
+                  onPressed: login,
                   child: Text("Login"),
                 ),
 
             SizedBox(height: 10),
 
+            // 🔹 Updated button to open Registration Page
             TextButton(
               onPressed: () {
-                // TODO: Navigate to Registration Page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => RegisterPage()),
+                );
               },
               child: Text("Don't have an account? Register"),
             ),
