@@ -1,21 +1,20 @@
-import 'package:flutter/material.dart';
-import 'pages/login_page.dart'; // import login screen
+ YardDrive Auto
 
-void main() {
-  runApp(YardDriveApp());
-}
+Overview
+YardDrive Auto is a mobile app built with Flutterthat helps users browse, search, and order auto parts based on their vehicle’s make, model, and year. Users can also manage their vehicle info and track orders.
 
-class YardDriveApp extends StatelessWidget {
+---
 
-  @override
-  Widget build(BuildContext context) {
+ Features
+- User authentication (Login/Register)  
+- Dashboard with personalized greeting  
+- Vehicle management (Add/Update)  
+- Browse and order parts  
+- View and delete orders  
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: "YardDrive Auto",
+---
 
-      home: LoginPage(), // app starts at login screen
-    );
-
-  }
-}
+ Technologies
+- Flutter (Dart)  
+- Firebase Authentication  
+- Cloud Firestore  
